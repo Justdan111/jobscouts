@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+body {
+  background:#F6F7F9; color:#15171C;
+  font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased;
+}
+.heatbar { background: linear-gradient(90deg,#117C6F,#E0913A); }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
