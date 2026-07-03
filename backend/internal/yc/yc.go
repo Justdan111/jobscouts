@@ -41,6 +41,16 @@ var client = &http.Client{Timeout: 25 * time.Second}
 
 // LoadHiring returns hiring companies across the recent batches.
 func LoadHiring(ctx context.Context) ([]Company, error) {
+	return loadFiltered(ctx, func(c Company) bool { return c.IsHiring })
+}
+
+// LoadRecent returns ALL companies from the recent batches (hiring or not).
+// Intended for cold-outreach flows where you email founders directly.
+func LoadRecent(ctx context.Context) ([]Company, error) {
+	return loadFiltered(ctx, func(Company) bool { return true })
+}
+
+func loadFiltered(ctx context.Context, keep func(Company) bool) ([]Company, error) {
 	var all []Company
 	for _, b := range RecentBatches {
 		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, rawBase+b+".json", nil)
@@ -55,7 +65,7 @@ func LoadHiring(ctx context.Context) ([]Company, error) {
 		}
 		res.Body.Close()
 		for _, c := range cos {
-			if c.IsHiring {
+			if keep(c) {
 				all = append(all, c)
 			}
 		}

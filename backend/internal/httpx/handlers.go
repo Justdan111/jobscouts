@@ -20,6 +20,7 @@ import (
 	"jobscout/internal/pipeline"
 	"jobscout/internal/profile"
 	"jobscout/internal/store"
+	"jobscout/internal/yc"
 )
 
 type Server struct {
@@ -45,6 +46,8 @@ func NewServer(cfg config.Config, st *store.Store, c *llm.Client) http.Handler {
 	mux.HandleFunc("PATCH /api/jobs/{id}", s.requireAuth(s.patchJob))
 	mux.HandleFunc("POST /api/jobs/{id}/draft", s.requireAuth(s.draft))
 	mux.HandleFunc("POST /api/refresh", s.requireAuth(s.refresh))
+	// startups for cold-outreach (auth)
+	mux.HandleFunc("GET /api/companies", s.requireAuth(s.listCompanies))
 	// applications (auth)
 	mux.HandleFunc("GET /api/applications", s.requireAuth(s.listApplications))
 	mux.HandleFunc("PUT /api/applications/{id}", s.requireAuth(s.putApplication))
@@ -258,6 +261,49 @@ func (s *Server) draft(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = s.st.SaveApplication(app)
 	writeJSON(w, 200, map[string]any{"application": app})
+}
+
+// ---- startups (cold-outreach) ----
+
+// listCompanies returns recent-batch YC companies (hiring or not) — the raw
+// list for founder outreach. Optional ?hiringOnly=1 narrows to c.IsHiring.
+func (s *Server) listCompanies(w http.ResponseWriter, r *http.Request) {
+	cos, err := yc.LoadRecent(r.Context())
+	if err != nil {
+		writeErr(w, 502, "could not load YC data")
+		return
+	}
+	hiringOnly := r.URL.Query().Get("hiringOnly") == "1"
+	type outCompany struct {
+		Name       string   `json:"name"`
+		Slug       string   `json:"slug"`
+		Batch      string   `json:"batch"`
+		OneLiner   string   `json:"oneLiner"`
+		LongDesc   string   `json:"longDesc"`
+		Website    string   `json:"website"`
+		YCURL      string   `json:"ycUrl"`
+		Location   string   `json:"location"`
+		Industries []string `json:"industries"`
+		IsHiring   bool     `json:"isHiring"`
+		Remote     bool     `json:"remote"`
+	}
+	out := make([]outCompany, 0, len(cos))
+	for _, c := range cos {
+		if hiringOnly && !c.IsHiring {
+			continue
+		}
+		loc := c.AllLocations
+		if loc == "" {
+			loc = "See company"
+		}
+		out = append(out, outCompany{
+			Name: c.Name, Slug: c.Slug, Batch: c.Batch, OneLiner: c.OneLiner,
+			LongDesc: c.LongDesc, Website: c.Website, YCURL: c.URL,
+			Location: loc, Industries: c.Industries, IsHiring: c.IsHiring,
+			Remote: c.Remote(),
+		})
+	}
+	writeJSON(w, 200, map[string]any{"companies": out})
 }
 
 // ---- applications ----

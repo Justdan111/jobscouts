@@ -50,6 +50,20 @@ export type Job = {
   discoveredAt: string;
 };
 
+export type Company = {
+  name: string;
+  slug: string;
+  batch: string;
+  oneLiner: string;
+  longDesc: string;
+  website: string;
+  ycUrl: string;
+  location: string;
+  industries: string[] | null;
+  isHiring: boolean;
+  remote: boolean;
+};
+
 export type Application = {
   userId: string;
   postingId: string;

@@ -15,6 +15,7 @@ function Nav() {
           {user ? (
             <>
               <Link href="/" className="hover:text-ink">Discover</Link>
+              <Link href="/companies" className="hover:text-ink">Startups</Link>
               <Link href="/applications" className="hover:text-ink">Applications</Link>
               <Link href="/profile" className="hover:text-ink">Profile</Link>
               <button onClick={logout} className="rounded-md border border-line px-2.5 py-1 font-500 text-ink hover:bg-paper">Log out</button>

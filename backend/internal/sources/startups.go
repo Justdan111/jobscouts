@@ -26,6 +26,9 @@ func YCToRawJobs(cos []yc.Company) []RawJob {
 		if c.LongDesc != "" {
 			desc = c.OneLiner + " — " + c.LongDesc
 		}
+		if c.Website != "" {
+			desc = strings.TrimSpace(desc) + "\n\nWebsite: " + c.Website
+		}
 		tags := append([]string{"startup", "yc", strings.ToLower(c.Batch)}, lower(c.Industries)...)
 		out = append(out, RawJob{
 			ID:          "yc-" + c.Slug,
@@ -33,7 +36,7 @@ func YCToRawJobs(cos []yc.Company) []RawJob {
 			Title:       c.Name + " — open roles (" + c.Batch + ")",
 			Company:     c.Name,
 			Location:    loc,
-			URL:         strings.TrimRight(c.URL, "/") + "/jobs",
+			URL:         strings.TrimRight(c.URL, "/"),
 			Description: truncate(desc, 1200),
 			Tags:        tags,
 			PostedAt:    now,

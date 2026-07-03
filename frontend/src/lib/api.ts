@@ -1,4 +1,4 @@
-import type { Application, Job, Profile, TriageStatus, AppStage, User } from "./types";
+import type { Application, Company, Job, Profile, TriageStatus, AppStage, User } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "jobscout_token";
@@ -43,6 +43,9 @@ export const api = {
     req<{ job: Job }>(`/api/jobs/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }),
   refresh: () => req<{ fetched: number; added: number; scored: number }>("/api/refresh", { method: "POST" }),
   draft: (id: string) => req<{ application: Application }>(`/api/jobs/${id}/draft`, { method: "POST" }),
+
+  listCompanies: (hiringOnly = false) =>
+    req<{ companies: Company[] }>(`/api/companies${hiringOnly ? "?hiringOnly=1" : ""}`),
 
   listApplications: () => req<{ applications: Application[] }>("/api/applications"),
   updateApplication: (id: string, payload: Partial<{ stage: AppStage; notes: string; resumeHighlights: string; coverEmail: string; pitch: string }>) =>
